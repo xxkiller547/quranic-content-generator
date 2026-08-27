@@ -1,0 +1,105 @@
+/* ============================================================
+   QURANIC THEME
+   ============================================================ */
+
+Screen {
+    background: #071512;
+    color: #eee8d5;
+    align:center middle
+}
+
+
+/* ============================================================
+    HEADER / FOOTER
+   ============================================================ */
+
+Header {
+    background: #0d211c;
+    color: #d4af37;
+}
+
+Footer {
+    background: #0d211c;
+    color: #d4af37;
+}
+
+
+/* ============================================================
+    MAIN FORM
+   ============================================================ */
+
+#form {
+    width: 60;
+    height: auto;
+
+    padding: 2 4;
+
+    background: #0d211c;
+    border: double #c9a227;
+
+    /* THIS centers the contents of the form */
+    align: center middle;
+}
+
+
+/* ============================================================
+    LABELS
+   ============================================================ */
+
+.field-label {
+    width: 100%;
+
+    margin-top: 1;
+    margin-bottom: 1;
+
+    color: #d4af37;
+    text-style: bold;
+
+    text-align: center;
+}
+
+
+/* ============================================================
+    INPUTS
+   ============================================================ */
+
+Input {
+    width: 100%;
+    height: 3;
+
+    margin-bottom: 1;
+
+    background: #081a16;
+    color: #eee8d5;
+
+    border: round #496b5f;
+}
+
+Input:focus {
+    border: round #d4af37;
+}
+
+
+/* ============================================================
+   GENERATE BUTTON
+   ============================================================ */
+
+#generate {
+    width: 100%;
+    height: 3;
+
+    margin-top: 2;
+
+    background: #c9a227;
+    color: #071512;
+
+    text-style: bold;
+}
+
+#generate:hover {
+    background: #e0c04b;
+}
+
+#generate:focus {
+    background: #e0c04b;
+}
