@@ -1,29 +1,4 @@
 #!/usr/bin/env python3
-"""
-compose_surah_page.py
-
-Combine a base page image with two SVG overlays — the word "سورة" and a
-surah name — to produce a surah title page.
-
-Overlay files live in one folder, named by 3-digit index:
-    000.svg  -> the word "سورة" (always this same file)
-    NNN.svg  -> the name of surah number NNN (e.g. 001.svg = الفاتحة)
-
-Each overlay is scaled down (preserving aspect ratio) to fit inside a
-bounding box defined as a fraction of the base image's width and height,
-so text can never blow up past a sane size regardless of the SVG's native
-aspect ratio. Overlays are also recolored using their alpha channel as a
-mask, so the output color no longer depends on whatever fill color is
-baked into the source SVG.
-
-Usage:
-    python compose_surah_page.py --base base.png --surah 1 \
-        --svg-dir ./svgs --out ./output/001.png --color "#FFFFFF"
-
-Dependencies:
-    pip install pillow cairosvg --break-system-packages
-"""
-
 from pathlib import Path
 import argparse
 import io
