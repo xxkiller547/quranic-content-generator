@@ -105,3 +105,24 @@ Input:focus {
 #generate:focus {
     background: #e0c04b;
 }
+
+/* ============================================================
+    POPUPSCREEN
+   ============================================================ */
+
+RecitersPopupScreen {
+    align: center middle;
+}
+
+#reciters-popup {
+    width: 50%;
+    height: 70%;
+    border: round $accent;
+    background: $panel;
+    padding: 1 2;
+}
+
+#status-label {
+    text-style: bold;
+    margin-bottom: 1;
+}

@@ -1,4 +1,5 @@
 from textual.app import App,ComposeResult
+from textual.screen import ModalScreen
 from textual import on,work
 from textual.widgets import (
     Header,
@@ -7,7 +8,7 @@ from textual.widgets import (
     Button,
     Footer
 )
-from textual.containers import Center,Horizontal,Vertical
+from textual.containers import Center,Horizontal,Vertical,VerticalScroll
 from compose_surah_page import compose_surah_page
 import requests
 from pathlib import Path
@@ -112,8 +113,64 @@ class Generator:
         video_clip.close()
         return output_path
 
+class RecitersPopupScreen(ModalScreen):
+    def __init__(self):
+        super().__init__()
+        self.reciters = []
+        
+    def compose(self)-> ComposeResult:
+        with VerticalScroll(id="reciters-popup"):
+            yield Label("[green]Loading reciters.....[/green]",id="status-label")
+
+    def on_key(self, event) -> None:
+        if event.key == "escape":
+            self.dismiss()
+    
+    def FetchReciters(self) -> list:
+        """from the Mp3quran.com"""
+        reciters_data_url = "https://www.mp3quran.net/api/v3/reciters"
+        params = {"language":"eng"}
+
+        try:
+            reciters_data = requests.get(reciters_data_url,params=params,timeout=10)
+        except requests.RequestException:
+            return ["[red]We couldnt fetch reciters![/red]"]
+        
+        if reciters_data.status_code != 200:
+            return ["[red]We couldnt fetch reciters![/red]"]
+        
+        reciters_data = reciters_data.json()
+        reciters_data_list = reciters_data["reciters"]
+
+        reciters_names_list = sorted([reciter["name"] for reciter in reciters_data_list])
+        reciters_names_list.insert(0,"Available Reciters (ESC for escape)")
+        
+        return reciters_names_list
+    
+    @work(thread=True)
+    def LoadReciters(self):
+        reciters = self.FetchReciters()
+        self.app.call_from_thread(self.ShowReciters,reciters)
+
+
+    def ShowReciters(self,reciters):
+        status_label = self.query_one("#status-label")
+        status_label.update(reciters[0])
+
+        if len(reciters) == 1:
+            return
+        
+        container = self.query_one("#reciters-popup")
+
+        for reciter in reciters[1::]:
+            container.mount(Label(reciter))
+        pass
+    def on_mount(self):
+        self.LoadReciters()
+
 class GeneratorApp(App):
 
+    BINDINGS = [("f1", "show_reciters", "Reciters"),]
     TITLE = "Quran Content Generator"
     CSS_PATH = str(BASE_DIR / "scripts" / "styles.tcss")
 
@@ -227,6 +284,9 @@ class GeneratorApp(App):
         self.image_name = event.value
         self.set_focus(None)
         pass
+
+    def action_show_reciters(self):
+        self.push_screen(RecitersPopupScreen())
 #========================================================================================
 
 if __name__ == "__main__":
