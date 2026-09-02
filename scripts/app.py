@@ -1,5 +1,5 @@
 from textual.app import App,ComposeResult
-from textual import on
+from textual import on,work
 from textual.widgets import (
     Header,
     Label,
@@ -12,6 +12,7 @@ from compose_surah_page import compose_surah_page
 import requests
 from pathlib import Path
 from moviepy import ImageClip, AudioFileClip
+from time import sleep
 
 #========================================================================================
 
@@ -85,7 +86,10 @@ class Generator:
             audio_file.write(audio.content)
             return str(self.temp_dir / f"{str(surah_number)}.mp3")
 
-
+    def clear_temp(self):
+        for f in self.temp_dir.iterdir():
+            if f.is_file():
+                f.unlink()
 
     def make_full_video(self, img_path, audio_path, output_path):
 
@@ -131,34 +135,97 @@ class GeneratorApp(App):
             yield Label("please enter the number of the surah:",classes="field-label")
             yield Input(placeholder="eg: 114 for surah Al-nas",id="surah_number_input")
 
-            yield Label("please enter the name of the image(or leave blank for bas):",classes="field-label")
+            yield Label("please enter the name of the image(or leave blank for base):",classes="field-label")
             yield Input(placeholder="eg: Mountains.jpg",id="image_input")
 
             yield Button("Generate!",id="generate")
 
+            yield Label("Nothing generating yet",id="progress-displayer") #TODO attach the error handeling and the failures and connect it to this 
         yield Footer()
 
     @on(Button.Pressed,"#generate")
     def Generate(self):
+        progress_label = self.query_one("#progress-displayer")
+
+        if not self.surah_number and self.reciter:
+            progress_label.update("[yellow]Please fill the the surah number input and reciter input atleast![/yellow]")
+            sleep(1.5)
+            progress_label.update("Nothing to generate!")
+            return
+        if not self.reciter:
+            progress_label.update("[yellow]Please fill the reiter name input![/yellow]")
+            sleep(1.5)
+            progress_label.update("Nothing to generate!")
+            return
+        if not self.surah_number:
+            progress_label.update("[yellow]Please fill the surah number input![/yellow]")
+            sleep(1.5)
+            progress_label.update("Nothing to generate!")
+            return
+
+        try:
+            surah_number_validatator = int(self.surah_number)
+            if not (1 <= surah_number_validatator <= 114):
+                progress_label.update("[yellow]Please enter a valid surah number![/yellow]")
+                sleep(1.5)
+                progress_label.update("Nothing to generate!")
+                return
+        except:
+            progress_label.update("[yellow]Please enter a valid surah number![/yellow]")
+            sleep(1.5)
+            progress_label.update("Nothing to generate!")
+            return
+
+        progress_label.update(f"[green] Generating the background image ({self.image_name})...[/green]")
+        self.StartGeneratorWorker()
+
+
+
+    @work(thread=True)
+    def StartGeneratorWorker(self):
+        progress_label = self.query_one("#progress-displayer")
+
         image_output_path = self.generator.GenerateBackgroundImage(surah_number=self.surah_number,image_name=self.image_name)
+        if not image_output_path:
+            self.call_from_thread(progress_label.update,f"[red]failed to generate image! stopping...[/red]")
+            sleep(1.5)
+            self.call_from_thread(progress_label.update,"Nothing generating yet")
+            self.generator.clear_temp()
+            return
+
+        self.call_from_thread(progress_label.update,"[green]Fetching audio...[/green]")
         audio_output_path = self.generator.FetchSurahAudio(reciter_name=self.reciter,surah_number=self.surah_number)
+        if not audio_output_path:
+            self.call_from_thread(progress_label.update,f"[red]failed to fetch audio! stopping...[/red]")
+            sleep(1.5)
+            self.call_from_thread(progress_label.update,"Nothing generating yet")
+            self.generator.clear_temp()
+            return
+
+        self.call_from_thread(progress_label.update,"[green]Combining full video...[/green]")
         video_output_path = self.generator.output_dir / f"{self.surah_number}.mp4"
         self.generator.make_full_video(img_path=image_output_path,audio_path=audio_output_path,output_path=video_output_path)
+        self.generator.clear_temp()
+        self.call_from_thread(progress_label.update,"[green]We are Done![/green]")
+        sleep(1.5)
         pass
 
     @on(Input.Submitted,"#reciter_input")
-    def SetReciter(self,event: Input.Changed):
+    def SetReciter(self,event: Input.Blurred):
         self.reciter = event.value
+        self.set_focus(None)
         pass
 
     @on(Input.Submitted,"#surah_number_input")
-    def SetSurah(self,event:Input.Changed):
-        self.surah_number = int(event.value)
+    def SetSurah(self,event:Input.Blurred):
+        self.surah_number = int(event.value) if event.value.strip().isdigit() else None
+        self.set_focus(None)
         pass
 
     @on(Input.Submitted,"#image_input")
-    def SetImage(self,event:Input.Changed):
+    def SetImage(self,event:Input.Blurred):
         self.image_name = event.value
+        self.set_focus(None)
         pass
 #========================================================================================
 
