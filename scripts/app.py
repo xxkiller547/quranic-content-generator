@@ -22,7 +22,8 @@ TEMP_DIR = BASE_DIR / "temp"
 OUTPUT_DIR = BASE_DIR / "outputs"
 ASSETS_DIR = BASE_DIR / "assets"
 
-
+TEMP_DIR.mkdir(parents=True, exist_ok=True)
+OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 #========================================================================================
 class Generator:
 
